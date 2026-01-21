@@ -1,67 +1,51 @@
-"use client";
-
-import { useState } from "react";
-import PhotoModal from "../components/PhotoModal";
-
 export default function SobreMiPage() {
-  const [open, setOpen] = useState(false);
-
-  // EDITA AQUÍ:
-  const photoSrc = "/Johan.jpeg"; // pon tu archivo en /public
-  const name = "Johan Mauricio Sánchez Gavirai";
-  const role = "Acompañamiento comunitario y orientación clara para registrar casos de servicios públicos en Bogotá.";
-
   return (
-    <section className="bg-white/80 border border-[var(--border)] rounded-3xl shadow-sm p-6 md:p-8">
-      <h1 className="text-3xl font-bold">Sobre mí</h1>
-      <p className="text-[var(--muted)] mt-2">
-        Actualmente este proyecto lo lidero yo. Mi objetivo es ayudarte a registrar tu caso de forma clara y segura.
-      </p>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 sm:p-10">
+        <h1 className="text-2xl font-semibold text-slate-900">Sobre mí</h1>
 
-      <div className="mt-6 grid md:grid-cols-[.7fr_1.3fr] gap-6">
-        <div className="border border-[var(--border)] rounded-3xl p-5 bg-white/75">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="w-28 h-28 rounded-full overflow-hidden border block"
-            style={{ borderColor: "var(--border)" }}
-            aria-label="Ampliar foto"
-            title="Clic para ampliar"
-          >
-            <img src={photoSrc} alt={`Foto de ${name}`} className="w-full h-full object-cover" />
-          </button>
-
-          <div className="mt-4">
-            <div className="font-bold text-xl">{name}</div>
-            <div className="text-[var(--muted)] mt-1">{role}</div>
+        <div className="mt-4 grid gap-6 sm:grid-cols-[180px_1fr]">
+          <div className="flex items-start justify-center">
+            <div className="h-36 w-36 rounded-full bg-slate-200 ring-4 ring-white shadow-sm" />
           </div>
 
-          <div className="mt-4 border-l-8 rounded-2xl p-4 bg-emerald-50" style={{ borderColor: "var(--success)" }}>
-            <div className="font-bold">Disponibilidad</div>
-            <div className="text-[var(--muted)] mt-1">Estoy abierta/o a recibir voluntarios que apoyen los procesos.</div>
-          </div>
-        </div>
+          <div>
+            <p className="text-sm text-slate-700 sm:text-base">
+              Soy un ciudadano que acompaña a personas y familias cuando tienen problemas con servicios públicos
+              (facturación, cortes, reconexiones, alumbrado, basuras, servicio irregular, medidores, entre otros).
+              Mi objetivo es que la gente entienda el proceso, reúna evidencias y sepa cómo reclamar de forma
+              ordenada y respetuosa.
+            </p>
 
-        <div className="border border-[var(--border)] rounded-3xl p-5 bg-white/75">
-          <div className="font-bold text-lg">Cómo ayudo</div>
-          <ul className="mt-3 list-disc pl-6 text-[var(--muted)]">
-            <li>Te guío para escribir el caso con tus palabras, sin enredos.</li>
-            <li>Te indico qué evidencias sirven (fotos, recibos, pantallazos, PDFs).</li>
-            <li>Te explico el proceso paso a paso de forma sencilla.</li>
-          </ul>
+            <p className="mt-3 text-sm text-slate-700 sm:text-base">
+              En muchos casos, el mayor problema no es solo el daño o el cobro, sino la falta de información.
+              Aquí buscamos que cada persona se sienta acompañada, con claridad y sin miedo a “equivocarse” al
+              hacer el trámite.
+            </p>
 
-          <div className="mt-5 border-l-8 rounded-2xl p-4 bg-amber-50" style={{ borderColor: "var(--warn)" }}>
-            <div className="font-bold">Transparencia</div>
-            <ul className="mt-2 list-disc pl-6 text-[var(--muted)]">
-              <li>No cobro por registrar el caso.</li>
-              <li>No pido claves ni datos bancarios.</li>
-              <li>No prometo resultados “milagrosos”.</li>
-            </ul>
+            <p className="mt-3 text-sm text-slate-700 sm:text-base">
+              Esta iniciativa es comunitaria. Si el proyecto crece, me gustaría recibir voluntarios que apoyen en
+              organización de casos, orientación administrativa y difusión responsable.
+            </p>
+
+            <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">Lo que sí hago</p>
+              <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                <li>Ayudar a organizar el caso y la evidencia.</li>
+                <li>Explicar el proceso en lenguaje sencillo.</li>
+                <li>Orientar sobre canales de radicación y seguimiento.</li>
+              </ul>
+
+              <p className="mt-4 text-sm font-semibold text-slate-900">Lo que NO hago</p>
+              <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                <li>No hago cobros por registrar el caso.</li>
+                <li>No prometo resultados “seguros”.</li>
+                <li>No hago política ni proselitismo.</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
-
-      <PhotoModal open={open} src={photoSrc} alt={`Foto de ${name}`} onClose={() => setOpen(false)} />
-    </section>
+      </section>
+    </main>
   );
 }

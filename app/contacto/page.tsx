@@ -2,122 +2,189 @@
 
 import { useState } from "react";
 
+function FacebookIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06C2 17.08 5.66 21.25 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.1 0 2.25.2 2.25.2v2.48h-1.27c-1.25 0-1.64.78-1.64 1.57v1.88h2.79l-.45 2.91h-2.34V22C18.34 21.25 22 17.08 22 12.06z"
+      />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M19.11 17.63c-.28-.14-1.64-.81-1.9-.9-.26-.1-.45-.14-.64.14-.19.28-.73.9-.9 1.09-.16.19-.33.21-.61.07-.28-.14-1.18-.43-2.24-1.38-.83-.74-1.39-1.65-1.56-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.33.43-.5.14-.16.19-.28.28-.47.1-.19.05-.35-.02-.5-.07-.14-.64-1.54-.88-2.12-.23-.55-.47-.48-.64-.49h-.55c-.19 0-.5.07-.76.35-.26.28-1 1-1 2.43 0 1.42 1.02 2.8 1.16 2.99.14.19 2.01 3.07 4.87 4.31.68.29 1.21.47 1.62.6.68.22 1.3.19 1.79.12.55-.08 1.64-.67 1.88-1.31.23-.64.23-1.19.16-1.31-.07-.12-.26-.19-.54-.33z"
+      />
+      <path
+        fill="currentColor"
+        d="M26.68 5.32A13.4 13.4 0 0 0 16.01 1C8.83 1 3 6.83 3 14c0 2.28.6 4.5 1.74 6.46L3 31l10.8-1.7A12.92 12.92 0 0 0 16 27c7.18 0 13.01-5.83 13.01-13a13 13 0 0 0-2.33-8.68zM16 25.1c-1.93 0-3.83-.52-5.49-1.52l-.39-.23-6.41 1.01 1.03-6.25-.25-.4A10.93 10.93 0 0 1 5.1 14C5.1 7.98 9.98 3.1 16 3.1c2.92 0 5.66 1.14 7.72 3.2A10.84 10.84 0 0 1 26.9 14c0 6.02-4.88 11.1-10.9 11.1z"
+      />
+    </svg>
+  );
+}
+
+function buildWhatsAppLink(phoneDigits: string, text?: string) {
+  const digits = (phoneDigits || "").replace(/\D/g, "");
+  const t = text ? encodeURIComponent(text) : "";
+  return `https://wa.me/${digits}${t ? `?text=${t}` : ""}`;
+}
+
 export default function ContactoPage() {
-  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "573114244234";
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://www.facebook.com/";
 
-  const fb = process.env.NEXT_PUBLIC_FACEBOOK_URL || "";
+  const whatsappHref = buildWhatsAppLink(
+    whatsappNumber,
+    "Hola, quiero hacer una consulta sobre un caso."
+  );
 
-  async function submitContact(e: React.FormEvent<HTMLFormElement>) {
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setFeedback(null);
+    setMsg(null);
+    setLoading(true);
 
-    const formEl = e.currentTarget;
-    const payload = {
-      name: (formEl.elements.namedItem("cName") as HTMLInputElement).value,
-      phone: (formEl.elements.namedItem("cPhone") as HTMLInputElement).value,
-      message: (formEl.elements.namedItem("cMessage") as HTMLTextAreaElement).value
-    };
+    const form = e.currentTarget;
+    const fd = new FormData(form);
 
     try {
-      const res = await fetch("/api/contacto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const res = await fetch("/api/contacto", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
 
-      // Lee como texto primero para evitar el error de JSON cuando llega HTML
-      const raw = await res.text();
-
-      // Intentar parsear JSON solo si parece JSON
-      let data: any = null;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        // No es JSON (probablemente HTML)
-        throw new Error(
-          `El servidor no respondió en formato esperado. (HTTP ${res.status}). ` +
-            `Revisa que exista app/api/contacto/route.ts y que soporte POST.`
-        );
+      if (!res.ok || !data?.ok) {
+        setMsg({
+          type: "err",
+          text: data?.message || "No pudimos enviar tu mensaje. Intenta de nuevo."
+        });
+        return;
       }
 
-      if (!res.ok || !data.ok) throw new Error(data.message || "No se pudo enviar el mensaje.");
-
-      formEl.reset();
-      setFeedback({ type: "ok", text: data.message });
-    } catch (err: any) {
-      setFeedback({ type: "err", text: err?.message || "No pudimos enviar tu mensaje ahora." });
+      setMsg({
+        type: "ok",
+        text: "Listo. Recibimos tu mensaje. Te responderé por WhatsApp o por llamada lo antes posible."
+      });
+      form.reset();
+    } catch {
+      setMsg({ type: "err", text: "No pudimos enviar tu mensaje. Intenta de nuevo." });
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <section className="bg-white/80 border border-[var(--border)] rounded-3xl shadow-sm p-6 md:p-8">
-      <h1 className="text-3xl font-bold">Contacto</h1>
-      <p className="text-[var(--muted)] mt-2">
-        Puedes dejar un mensaje aquí. También puedes visitar Facebook (si está configurado).
-      </p>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 sm:p-10">
+        <h1 className="text-2xl font-semibold text-slate-900">Contacto</h1>
+        <p className="mt-3 text-sm text-slate-700 sm:text-base">
+          Si necesitas ayuda, puedes escribirme. Te responderé por WhatsApp o por llamada.
+        </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {fb ? (
+        <div className="mt-6 flex flex-wrap gap-3">
           <a
-            href={fb}
+            href={whatsappHref}
             target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-3 rounded-2xl text-white font-bold min-h-[52px] inline-flex items-center justify-center"
-            style={{ background: "var(--fb)" }}
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
           >
-            Ir a Facebook
+            <WhatsAppIcon className="h-5 w-5" />
+            WhatsApp
           </a>
-        ) : (
-          <div className="px-5 py-3 rounded-2xl border border-[var(--border)] bg-white/80 font-bold text-[var(--muted)]">
-            Facebook no configurado
-          </div>
-        )}
-      </div>
 
-      <div className="mt-6 border border-[var(--border)] rounded-3xl p-5 bg-white/75">
-        <div className="font-bold text-lg">Horarios</div>
-        <div className="text-[var(--muted)] mt-1">
-          Lunes a viernes: 8:00 a.m. – 5:00 p.m.<br />
-          Sábados: 9:00 a.m. – 12:00 m.
-        </div>
-      </div>
-
-      <form className="mt-6 border border-[var(--border)] rounded-3xl p-5 bg-white/75" onSubmit={submitContact} noValidate>
-        <div className="font-bold text-lg">Deja un mensaje</div>
-
-        <label className="font-bold block mb-1 mt-4" htmlFor="cName">Nombre *</label>
-        <input className="w-full px-4 py-3 rounded-2xl border border-[var(--border)] bg-white"
-          id="cName" name="cName" required />
-
-        <label className="font-bold block mb-1 mt-3" htmlFor="cPhone">Teléfono (WhatsApp) *</label>
-        <input className="w-full px-4 py-3 rounded-2xl border border-[var(--border)] bg-white"
-          id="cPhone" name="cPhone" required placeholder="Ej: 3001234567" />
-
-        <label className="font-bold block mb-1 mt-3" htmlFor="cMessage">Mensaje *</label>
-        <textarea className="w-full px-4 py-3 rounded-2xl border border-[var(--border)] bg-white min-h-[140px]"
-          id="cMessage" name="cMessage" required placeholder="Cuéntanos en qué te podemos ayudar." />
-
-        {feedback && (
-          <div
-            className={`mt-4 rounded-2xl p-4 border-l-8 ${feedback.type === "ok" ? "bg-emerald-50" : "bg-red-50"}`}
-            style={{ borderColor: feedback.type === "ok" ? "var(--success)" : "#b91c1c" }}
-            aria-live="polite"
+          <a
+            href={facebookUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
           >
-            <div className="font-bold">{feedback.type === "ok" ? "Recibido" : "Revisa esto"}</div>
-            <div className="mt-1">{feedback.text}</div>
+            <FacebookIcon className="h-5 w-5" />
+            Facebook
+          </a>
+        </div>
+
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-5">
+            <h2 className="text-base font-semibold text-slate-900">Deja un mensaje</h2>
+
+            {msg ? (
+              <div
+                className={`mt-4 rounded-xl border p-3 text-sm ${
+                  msg.type === "ok"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                    : "border-rose-200 bg-rose-50 text-rose-900"
+                }`}
+              >
+                {msg.text}
+              </div>
+            ) : null}
+
+            <form onSubmit={onSubmit} className="mt-4 grid gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Nombre *</label>
+                <input
+                  name="name"
+                  required
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  placeholder="Escribe tu nombre"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Teléfono *</label>
+                <input
+                  name="phone"
+                  required
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  placeholder="Ej: 3001234567"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900">Mensaje *</label>
+                <textarea
+                  name="message"
+                  required
+                  rows={5}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  placeholder="Cuéntame en qué te puedo ayudar"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                {loading ? "Enviando..." : "Enviar mensaje"}
+              </button>
+
+              <p className="text-xs text-slate-600">
+                Protección de datos (Ley 1581 de 2012). Usamos tu información solo para responderte.
+              </p>
+            </form>
           </div>
-        )}
 
-        <div className="mt-5">
-          <button type="submit" className="px-5 py-3 rounded-2xl text-white font-bold min-h-[52px]" style={{ background: "var(--primary)" }}>
-            Enviar mensaje
-          </button>
-        </div>
+          <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200">
+            <h2 className="text-base font-semibold text-slate-900">Atención</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Si el caso es urgente, lo más rápido es escribir por WhatsApp. Si prefieres, también puedo llamarte.
+            </p>
 
-        <div className="text-sm text-[var(--muted)] mt-3">
-          Protección de datos (Ley 1581 de 2012). Usamos tu información solo para responderte.
+            <div className="mt-4 rounded-xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">Recomendación</p>
+              <p className="mt-2 text-sm text-slate-700">
+                Ten a la mano: dirección, barrio/localidad, número de contrato o factura (si aplica), y evidencias.
+              </p>
+            </div>
+          </div>
         </div>
-      </form>
-    </section>
+      </section>
+    </main>
   );
 }

@@ -32,3 +32,11 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
   outline: 3px solid #111827;
   outline-offset: 2px;
 }
+
+input[type="file"] {
+  max-width: 100%;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+}

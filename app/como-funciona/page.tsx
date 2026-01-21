@@ -1,24 +1,43 @@
 export default function ComoFuncionaPage() {
-  const steps = [
-    ["Paso 1: Recibimos tu caso", "Queda registrado con un número de seguimiento."],
-    ["Paso 2: Revisamos evidencias", "Vemos recibos, fotos o documentos para entender bien."],
-    ["Paso 3: Radicamos y hacemos seguimiento", "Según el caso, se gestiona ante la entidad o empresa."],
-    ["Paso 4: Te informamos", "Te contamos el resultado y los próximos pasos, sin lenguaje difícil."]
-  ];
-
   return (
-    <section className="bg-white/80 border border-[var(--border)] rounded-3xl shadow-sm p-6 md:p-8">
-      <h1 className="text-3xl font-bold">Cómo funciona</h1>
-      <p className="text-[var(--muted)] mt-2">Cuatro pasos, sin enredos.</p>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 sm:p-10">
+        <h1 className="text-2xl font-semibold text-slate-900">Cómo funciona</h1>
+        <p className="mt-3 text-sm text-slate-700 sm:text-base">
+          Este proceso está pensado para que sea claro y sin enredos. Tú solo cuéntame qué pasó y adjunta lo que
+          tengas.
+        </p>
 
-      <div className="mt-5 grid md:grid-cols-2 gap-4">
-        {steps.map(([t, d]) => (
-          <div key={t} className="border border-[var(--border)] rounded-2xl p-4 bg-white/75">
-            <div className="font-bold">{t}</div>
-            <div className="text-[var(--muted)] mt-1">{d}</div>
-          </div>
-        ))}
-      </div>
-    </section>
+        <ol className="mt-6 grid gap-4">
+          <li className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Paso 1: Recibimos tu caso</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Registras tu información y la dirección del problema.
+            </p>
+          </li>
+
+          <li className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Paso 2: Revisamos evidencias</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Miramos fotos, PDFs o videos para entender mejor lo ocurrido.
+            </p>
+          </li>
+
+          <li className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Paso 3: Radicamos y hacemos seguimiento</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Te indicamos la ruta adecuada (empresa, entidad y canales) y hacemos seguimiento del caso.
+            </p>
+          </li>
+
+          <li className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Paso 4: Te informamos el resultado</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Te contactamos por WhatsApp o por llamada para contarte qué pasó y qué sigue.
+            </p>
+          </li>
+        </ol>
+      </section>
+    </main>
   );
 }

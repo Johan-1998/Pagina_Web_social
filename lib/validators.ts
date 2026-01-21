@@ -1,19 +1,29 @@
 import { z } from "zod";
 
+const phoneRegex = /^[0-9+\s()-]{7,20}$/;
+
 export const caseSchema = z.object({
-  fullName: z.string().min(3, "Escribe tu nombre completo."),
-  phone: z.string().min(7, "Revisa el teléfono."),
-  email: z.string().email("Correo inválido.").optional().or(z.literal("")),
-  address: z.string().min(5, "Escribe la dirección del caso."),
-  neighborhood: z.string().min(2, "Escribe el barrio."),
-  locality: z.string().min(2, "Escribe la localidad."),
-  problemType: z.string().min(2, "Selecciona el tipo de problema."),
-  reference: z.string().optional().or(z.literal("")),
-  description: z.string().min(20, "Cuéntanos un poco más (mínimo 20 caracteres).")
+  fullName: z.string().trim().min(1, "Por favor escribe tu nombre completo."),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Por favor escribe tu teléfono.")
+    .regex(phoneRegex, "Revisa el teléfono. Usa solo números y, si quieres, + y espacios."),
+  email: z.string().trim().email("Revisa el correo.").optional().or(z.literal("")),
+  address: z.string().trim().min(1, "Por favor escribe la dirección del caso."),
+  neighborhood: z.string().trim().min(1, "Por favor escribe el barrio."),
+  locality: z.string().trim().min(1, "Por favor escribe la localidad."),
+  problemType: z.string().trim().min(1, "Por favor selecciona el tipo de problema."),
+  reference: z.string().trim().optional().or(z.literal("")),
+  description: z.string().trim().min(1, "Por favor cuéntanos qué pasó (una frase es suficiente).")
 });
 
 export const contactSchema = z.object({
-  name: z.string().min(3, "Escribe tu nombre."),
-  phone: z.string().min(7, "Revisa el teléfono."),
-  message: z.string().min(10, "Escribe un mensaje más claro (mínimo 10 caracteres).")
+  name: z.string().trim().min(1, "Por favor escribe tu nombre."),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Por favor escribe tu teléfono.")
+    .regex(phoneRegex, "Revisa el teléfono. Usa solo números y, si quieres, + y espacios."),
+  message: z.string().trim().min(1, "Por favor escribe tu mensaje.")
 });

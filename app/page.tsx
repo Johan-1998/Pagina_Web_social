@@ -1,55 +1,93 @@
 import Link from "next/link";
 
 export default function HomePage() {
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "573114244234";
+  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    "Hola, quiero registrar un caso de servicios públicos."
+  )}`;
+
   return (
-    <section className="bg-white/80 border border-[var(--border)] rounded-3xl shadow-sm p-6 md:p-8">
-      <div className="grid md:grid-cols-[1.2fr_.8fr] gap-6">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight">
-            Registra tu caso y recibe acompañamiento claro
-          </h1>
-          <p className="mt-3 text-[var(--muted)]">
-            Para problemas de servicios públicos en Bogotá: cobros altos, cortes, basuras, alumbrado y fallas del servicio.
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-6 sm:p-10">
+        <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+          Registra tu caso y recibe acompañamiento claro
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm text-slate-700 sm:text-base">
+          Esta plataforma ayuda a ciudadanos, especialmente adultos mayores, a reportar problemas con servicios
+          públicos y organizar evidencias. Te orientaré para avanzar por la ruta correcta.
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          {/* ✅ Solo WhatsApp aquí (no botón registrar) */}
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
+          >
+            Escribir por WhatsApp
+          </a>
+
+          <Link
+            href="/como-funciona"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+          >
+            Ver el proceso
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200">
+            <p className="text-sm font-semibold text-slate-900">1) Cuéntame tu caso</p>
+            <p className="mt-2 text-sm text-slate-700">
+              En “Registrar caso” llenas un formulario sencillo con tus datos y la dirección del problema.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200">
+            <p className="text-sm font-semibold text-slate-900">2) Sube evidencias</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Puedes adjuntar fotos, PDF o video. Entre más claro, mejor.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200">
+            <p className="text-sm font-semibold text-slate-900">3) Te contacto</p>
+            <p className="mt-2 text-sm text-slate-700">
+              Te responderé por WhatsApp o por llamada para confirmar y explicarte los siguientes pasos.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white/70 p-4">
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold text-slate-900">Confianza:</span> tu información se usa únicamente
+            para gestionar tu caso. Las evidencias se guardan de forma privada.
+          </p>
+        </div>
+
+        {/* ✅ Disponibilidad + Horarios al final del Inicio */}
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white/70 p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Disponibilidad y horarios</h2>
+          <p className="mt-2 text-sm text-slate-700">
+            Te puedo atender por WhatsApp o por llamada, según te quede más fácil.
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href="/registro"
-              className="px-5 py-3 rounded-2xl text-white font-bold min-h-[52px] inline-flex items-center justify-center"
-              style={{ background: "var(--primary)" }}
-            >
-              Registrar mi caso
-            </Link>
-
-            <Link
-              href="/como-funciona"
-              className="px-5 py-3 rounded-2xl border border-[var(--border)] bg-white/80 font-bold min-h-[52px] inline-flex items-center justify-center"
-            >
-              Ver el proceso
-            </Link>
-          </div>
-
-          <div className="mt-5 border-l-8 rounded-2xl p-4 bg-emerald-50 border-[var(--success)]">
-            <div className="font-bold">Tu información se maneja con cuidado</div>
-            <div className="text-[var(--muted)] mt-1">
-              Solo la usamos para gestionar tu solicitud. No pedimos claves ni datos bancarios.
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">Horarios</p>
+              <p className="mt-2 text-sm text-slate-700">Lunes a viernes: 8:00 a.m. – 5:00 p.m.</p>
+              <p className="text-sm text-slate-700">Sábados: 9:00 a.m. – 12:00 m.</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">Voluntarios</p>
+              <p className="mt-2 text-sm text-slate-700">
+                Si quieres apoyar como voluntario (comunitario, jurídico o administrativo), puedes escribirme.
+              </p>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-3">
-          {[
-            ["1) Cuéntanos qué pasó", "Llena el formulario con calma."],
-            ["2) Adjunta evidencias", "Fotos, PDFs o videos cortos."],
-            ["3) Te informamos", "Te contamos avances por WhatsApp."]
-          ].map(([t, d]) => (
-            <div key={t} className="border border-[var(--border)] rounded-2xl p-4 bg-white/80">
-              <div className="font-bold">{t}</div>
-              <div className="text-[var(--muted)] mt-1">{d}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+        </section>
+      </section>
+    </main>
   );
 }
