@@ -82,7 +82,7 @@ export default function HomePage() {
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Horarios</p>
               <p className="mt-2 text-sm text-slate-700">Lunes a viernes: 8:00 a.m. – 5:00 p.m.</p>
-              <p className="text-sm text-slate-700">Sábados: 9:00 a.m. – 12:00 m.</p>
+              <p className="text-sm text-slate-700">Sábados: 9:00 a.m. – 12:00 p.m.</p>
             </div>
 
             <div className="rounded-xl bg-slate-50 p-4">
