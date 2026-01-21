@@ -3,8 +3,7 @@ import { caseSchema } from "@/lib/validators";
 import { prisma } from "@/lib/db";
 import { sendAdminEmail } from "@/lib/mailer";
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
@@ -16,14 +15,12 @@ function safeName(name: string) {
 function randomDigits3() {
   return String(Math.floor(Math.random() * 1000)).padStart(3, "0");
 }
-
 function randomLetters3() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let out = "";
   for (let i = 0; i < 3; i++) out += letters[Math.floor(Math.random() * letters.length)];
   return out;
 }
-
 async function generateUniqueShortCode() {
   for (let i = 0; i < 30; i++) {
     const code = `${randomDigits3()}${randomLetters3()}`;
@@ -55,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, message: msg }, { status: 400 });
     }
 
-    // Crear caso con shortCode
+    // Crear caso con código corto
     const shortCode = await generateUniqueShortCode();
 
     const created = await prisma.case.create({
@@ -73,10 +70,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Guardar evidencias en local (solo dev)
-    const uploadDir = process.env.UPLOAD_DIR || "./uploads";
-    await mkdir(uploadDir, { recursive: true });
-
+    // Evidencias (múltiples, ilimitadas en cantidad; limitamos por tamaño y tipo)
     const maxBytes = Number(process.env.MAX_FILE_BYTES || "26214400"); // 25MB por archivo
     const evidences = form.getAll("evidence");
 
@@ -106,23 +100,30 @@ export async function POST(req: NextRequest) {
       }
 
       const bytes = Buffer.from(await item.arrayBuffer());
-      const storedName = `${randomUUID()}-${safeName(item.name || "archivo")}`;
-      const fullPath = path.join(uploadDir, storedName);
 
-      await writeFile(fullPath, bytes);
+      // Guardamos en R2 con un key único
+      const storedName = `${created.shortCode}/${randomUUID()}-${safeName(item.name || "archivo")}`;
 
+      await uploadToR2({
+        key: storedName,
+        body: bytes,
+        contentType: mime
+      });
+
+      // Guardamos metadata en la BD
       await prisma.evidence.create({
         data: {
           caseId: created.id,
           originalName: item.name || "archivo",
-          storedName,
+          storedName, // aquí queda el "key" de R2
           mimeType: mime,
           sizeBytes: item.size,
-          localPath: fullPath
+          localPath: "" // en producción con R2 no aplica; lo dejamos vacío para no romper tu modelo actual
         }
       });
     }
 
+    // Email al admin (sin adjuntos, solo resumen)
     const html =
       `<div style="font-family: Arial, sans-serif; line-height: 1.4;">` +
       `<h2>Nuevo caso registrado</h2>` +
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
       `<p><strong>Tipo de problema:</strong> ${created.problemType}</p>` +
       `<p><strong>Referencia:</strong> ${created.reference ?? "No informado"}</p>` +
       `<p><strong>Descripción:</strong><br/>${created.description.replace(/\n/g, "<br/>")}</p>` +
-      `<p style="color:#475569">Evidencias guardadas en el servidor (modo desarrollo).</p>` +
+      `<p style="color:#475569">Evidencias: guardadas de forma privada en almacenamiento seguro.</p>` +
       `</div>`;
 
     await sendAdminEmail(
