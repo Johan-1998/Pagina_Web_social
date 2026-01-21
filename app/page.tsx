@@ -1,41 +1,18 @@
-import Link from "next/link";
-
 export default function HomePage() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "573114244234";
-  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    "Hola, quiero registrar un caso de servicios públicos."
-  )}`;
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-sky-50 p-6 sm:p-10">
         <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
           Registra tu caso y recibe acompañamiento claro
         </h1>
+
         <p className="mt-3 max-w-2xl text-sm text-slate-700 sm:text-base">
-          Esta plataforma ayuda a ciudadanos, especialmente adultos mayores, a reportar problemas con servicios
-          públicos y organizar evidencias. Te orientaré para avanzar por la ruta correcta.
+          Esta plataforma ayuda a ciudadanos, especialmente adultos mayores, a registrar problemas con servicios
+          públicos en Bogotá, subir evidencias y entender el proceso. La idea es que no te sientas solo(a) ni
+          confundido(a): aquí todo se explica con calma y paso a paso.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          {/* ✅ Solo WhatsApp aquí (no botón registrar) */}
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white hover:opacity-90"
-          >
-            Escribir por WhatsApp
-          </a>
-
-          <Link
-            href="/como-funciona"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-          >
-            Ver el proceso
-          </Link>
-        </div>
-
+        {/* ✅ Pasos (se quedan) */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200">
             <p className="text-sm font-semibold text-slate-900">1) Cuéntame tu caso</p>
@@ -47,7 +24,7 @@ export default function HomePage() {
           <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200">
             <p className="text-sm font-semibold text-slate-900">2) Sube evidencias</p>
             <p className="mt-2 text-sm text-slate-700">
-              Puedes adjuntar fotos, PDF o video. Entre más claro, mejor.
+              Puedes adjuntar fotos, PDF o video. Entre más claro esté, mejor.
             </p>
           </div>
 
@@ -59,14 +36,42 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* ✅ Confianza (se queda) */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white/70 p-4">
           <p className="text-sm text-slate-700">
             <span className="font-semibold text-slate-900">Confianza:</span> tu información se usa únicamente
-            para gestionar tu caso. Las evidencias se guardan de forma privada.
+            para gestionar tu caso. Las evidencias se guardan de forma privada y no se publican.
           </p>
         </div>
 
-        {/* ✅ Disponibilidad + Horarios al final del Inicio */}
+        {/* ✅ Propósito / Misión / Visión (nuevo) */}
+        <section className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
+            <h2 className="text-base font-semibold text-slate-900">Propósito</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Que cualquier persona pueda defender sus derechos frente a servicios públicos, con información clara,
+              evidencias organizadas y acompañamiento comunitario, sin lenguaje técnico ni confusiones.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
+            <h2 className="text-base font-semibold text-slate-900">Misión</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Brindar defensa real del usuario, facilitar el acceso a derechos y acompañar de forma justa y
+              respetuosa cada caso, explicando el proceso y ayudando a radicar y hacer seguimiento cuando aplique.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
+            <h2 className="text-base font-semibold text-slate-900">Visión</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Comunidades informadas, organizadas y protegidas frente a abusos: ciudadanos que saben qué hacer,
+              cómo reclamar y cómo hacer seguimiento sin miedo.
+            </p>
+          </div>
+        </section>
+
+        {/* ✅ Disponibilidad + Horarios al final (como pediste) */}
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white/70 p-6">
           <h2 className="text-lg font-semibold text-slate-900">Disponibilidad y horarios</h2>
           <p className="mt-2 text-sm text-slate-700">
@@ -79,6 +84,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-slate-700">Lunes a viernes: 8:00 a.m. – 5:00 p.m.</p>
               <p className="text-sm text-slate-700">Sábados: 9:00 a.m. – 12:00 m.</p>
             </div>
+
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Voluntarios</p>
               <p className="mt-2 text-sm text-slate-700">

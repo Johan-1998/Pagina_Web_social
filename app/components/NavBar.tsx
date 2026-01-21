@@ -55,7 +55,7 @@ export default function NavBar() {
       { href: "/como-funciona", label: "Proceso" },
       { href: "/sobre-mi", label: "Sobre mí" },
       { href: "/contacto", label: "Contacto" }
-      // ✅ Quitamos "Registrar" del menú. Solo queda el botón grande.
+      // ✅ No hay "Registrar" en el menú
     ],
     []
   );
@@ -65,15 +65,22 @@ export default function NavBar() {
     "Hola, quiero registrar un caso de servicios públicos."
   );
 
+  // ✅ Botón principal: color amigable (teal/verde) y centrado
+  const primaryBtnClass =
+    "inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700";
+
+  const primaryBtnClassMobile =
+    "inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700";
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-semibold text-slate-900">
-            Defensa de Servicios Públicos – Bogotá
+            Defensa de Servicios Públicos
           </span>
           <span className="truncate text-xs text-slate-600">
-            Registro ciudadano y acompañamiento comunitario
+            Acompañamiento comunitario
           </span>
         </Link>
 
@@ -117,20 +124,14 @@ export default function NavBar() {
             <span className="hidden lg:inline">WhatsApp</span>
           </a>
 
-          <Link
-            href="/registro"
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
+          <Link href="/registro" className={primaryBtnClass}>
             Registrar caso
           </Link>
         </nav>
 
         {/* Mobile */}
         <div className="flex items-center gap-2 md:hidden">
-          <Link
-            href="/registro"
-            className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-          >
+          <Link href="/registro" className={primaryBtnClassMobile}>
             Registrar caso
           </Link>
 
@@ -146,6 +147,7 @@ export default function NavBar() {
         </div>
       </div>
 
+      {/* Mobile panel */}
       {open ? (
         <div className="border-t border-slate-200 bg-white md:hidden">
           <div className="mx-auto max-w-6xl px-4 py-3">
