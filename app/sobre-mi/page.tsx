@@ -59,7 +59,7 @@ export default function SobreMiPage() {
             </p>
 
             <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Lo que sí hago</p>
+              <p className="text-sm font-semibold text-slate-900">Lo que SÍ hago</p>
               <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
                 <li>Ayudar a organizar el caso y la evidencia.</li>
                 <li>Explicar el proceso en lenguaje sencillo.</li>
