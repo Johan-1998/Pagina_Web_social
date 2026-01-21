@@ -5,9 +5,7 @@ import PhotoModal from "../components/PhotoModal";
 
 export default function SobreMiPage() {
   const [open, setOpen] = useState(false);
-
-  // ✅ IMPORTANTE: aquí defines el archivo que pusiste en /public
-  const photoSrc = "/johan.jpeg"; // si tu foto se llama diferente, cámbialo aquí
+  const photoSrc = "/johan.jpeg";
   const photoAlt = "Foto de Johan Mauricio Sánchez Gaviria";
 
   return (
