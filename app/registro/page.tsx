@@ -1,263 +1,291 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
-const problemOptions = [
-  "Facturación excesiva",
-  "Corte de servicio",
-  "Reconexión no realizada",
-  "Basuras",
-  "Alumbrado público",
-  "Servicio irregular",
-  "Medidor dañado",
-  "Otro"
-];
+type AnyApi = any;
+
+function Banner({
+  type,
+  children,
+}: {
+  type: "success" | "error";
+  children: React.ReactNode;
+}) {
+  const cls =
+    type === "success"
+      ? "rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900"
+      : "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-900";
+
+  return <div className={cls}>{children}</div>;
+}
+
+function pickCaseId(data: AnyApi): string {
+  // ✅ intenta varias llaves por si tu API no usa "shortCode"
+  const candidates = [
+    data?.shortCode,
+    data?.caseId,
+    data?.radicado,
+    data?.id,
+    data?.data?.shortCode,
+    data?.data?.caseId,
+    data?.data?.id,
+  ];
+
+  const found = candidates.find((v) => typeof v === "string" && v.trim().length > 0);
+  return found || "";
+}
 
 export default function RegistroPage() {
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string; code?: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [successId, setSuccessId] = useState<string>("");
+  const [files, setFiles] = useState<File[]>([]);
 
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [fileNames, setFileNames] = useState<string[]>([]);
+  const successBanner = useMemo(() => {
+    if (!successId) return null;
+    return (
+      <Banner type="success">
+        <div className="text-sm">
+          <div className="font-semibold">Listo. Recibimos tu caso.</div>
+          <div className="mt-1">
+            Tu número de radicado es:{" "}
+            <span className="font-extrabold underline">{successId}</span>
+          </div>
+          <div className="mt-1 font-bold">
+            IMPORTANTE: guarda este número para hacer seguimiento.
+          </div>
+          <div className="mt-1">Te contactaremos por WhatsApp o por llamada.</div>
+        </div>
+      </Banner>
+    );
+  }, [successId]);
 
-  function onFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
-    setFileNames(files.map((f) => f.name));
-  }
+  const errorBanner = useMemo(() => {
+    if (!error) return null;
+    return (
+      <Banner type="error">
+        <div className="text-sm font-semibold">{error}</div>
+      </Banner>
+    );
+  }, [error]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMsg(null);
-    setLoading(true);
+    setError("");
+    setSuccessId("");
 
     const form = e.currentTarget;
     const fd = new FormData(form);
 
+    // ✅ archivos NO obligatorios
+    for (const f of files) fd.append("files", f);
+
+    setSending(true);
     try {
       const res = await fetch("/api/casos", { method: "POST", body: fd });
-      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok || !data?.ok) {
-        setMsg({
-          type: "err",
-          text: data?.message || "No pudimos enviar tu caso. Intenta de nuevo."
-        });
+      let data: AnyApi = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok || !data || data.ok === false) {
+        const msg =
+          data?.message ||
+          "No se pudo enviar el caso. Revisa tu conexión e inténtalo de nuevo.";
+        setError(String(msg));
         return;
       }
 
-      setMsg({
-        type: "ok",
-        text:
-          "Listo. Recibimos tu caso. En las próximas horas hábiles revisaremos la información y te contactaremos por WhatsApp o por llamada.",
-        code: data?.caseId
-      });
+      // ✅ aquí recuperamos el ID SIN importar el nombre de la llave
+      const caseId = pickCaseId(data);
+      if (!caseId) {
+        // si el backend respondió ok pero no mandó ID, mostramos mensaje igual
+        setError("Tu caso se envió, pero no recibimos el número de radicado. Intenta de nuevo o contáctanos.");
+        return;
+      }
 
+      setSuccessId(caseId);
+
+      // limpia formulario DESPUÉS de setear ID
       form.reset();
-      setFileNames([]);
+      setFiles([]);
     } catch {
-      setMsg({
-        type: "err",
-        text: "No pudimos enviar tu caso. Intenta de nuevo o escríbenos por WhatsApp."
-      });
+      setError("No se pudo enviar el caso. Revisa tu conexión e inténtalo de nuevo.");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="rounded-2xl border border-slate-200 bg-white/70 p-6 sm:p-10">
-        <h1 className="text-2xl font-semibold text-slate-900">Registrar caso</h1>
-        <p className="mt-3 text-sm text-slate-700 sm:text-base">
-          Llena este formulario con calma. Si no sabes algún dato, escribe lo que tengas. Te contactaremos por WhatsApp o por llamada.
+    <div className="py-10">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8">
+        <h1 className="text-2xl font-bold">Registrar caso</h1>
+        <p className="mt-2 text-sm text-slate-700">
+          Llena este formulario con calma. Si no sabes algún dato, escribe lo que tengas.
+          Te contactaremos por WhatsApp o por llamada.
         </p>
 
-        {msg ? (
-          <div
-            className={`mt-6 rounded-2xl border p-4 text-sm ${
-              msg.type === "ok"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-rose-200 bg-rose-50 text-rose-900"
-            }`}
-          >
-            <p>{msg.text}</p>
-            {msg.type === "ok" && msg.code ? (
-              <p className="mt-2 font-semibold">Código del caso: {msg.code}</p>
-            ) : null}
-          </div>
-        ) : null}
+        {/* ✅ arriba */}
+        <div className="mt-5 space-y-3">
+          {successBanner}
+          {errorBanner}
+        </div>
 
-        <form onSubmit={onSubmit} className="mt-8 grid gap-5">
-          <div className="grid gap-5 sm:grid-cols-2">
+        <form onSubmit={onSubmit} className="mt-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Nombre completo *</label>
+              <label className="text-sm font-semibold">Nombre completo *</label>
               <input
                 name="fullName"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Ej: Juan Pérez"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: Ana Pérez"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Teléfono *</label>
+              <label className="text-sm font-semibold">Teléfono *</label>
               <input
                 name="phone"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Ej: 3001234567"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: 311 000 0000"
               />
-              <p className="mt-1 text-xs text-slate-600">Te contactaremos por WhatsApp o por llamada.</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Te contactaremos por WhatsApp o por llamada.
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Correo (opcional)</label>
+              <label className="text-sm font-semibold">Correo (opcional)</label>
               <input
                 name="email"
                 type="email"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-base outline-none focus:border-slate-400"
                 placeholder="Ej: correo@ejemplo.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Dirección del caso *</label>
+              <label className="text-sm font-semibold">Dirección del caso *</label>
               <input
                 name="address"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Ej: Cra 10 # 20-30"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: Calle 10 # 20-30"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Barrio *</label>
+              <label className="text-sm font-semibold">Barrio *</label>
               <input
                 name="neighborhood"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Ej: Kennedy Central"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: La Marichuela"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900">Localidad *</label>
+              <label className="text-sm font-semibold">Localidad *</label>
               <input
                 name="locality"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Ej: Kennedy"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: Usme"
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-slate-900">Tipo de problema *</label>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold">Tipo de problema *</label>
               <select
                 name="problemType"
                 required
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-slate-400"
                 defaultValue=""
               >
                 <option value="" disabled>
                   Selecciona una opción
                 </option>
-                {problemOptions.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
+                <option>Facturación excesiva</option>
+                <option>Corte de servicio</option>
+                <option>Reconexión no realizada</option>
+                <option>Basuras</option>
+                <option>Alumbrado público</option>
+                <option>Servicio irregular</option>
+                <option>Medidor dañado</option>
+                <option>Otro</option>
               </select>
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-slate-900">
-                Número de contrato / factura (opcional)
-              </label>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold">Referencia (opcional)</label>
               <input
                 name="reference"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Si lo tienes, escríbelo aquí"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Ej: número de cuenta, código de usuario, etc."
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-slate-900">Descripción del problema *</label>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold">Descripción del problema *</label>
               <textarea
                 name="description"
                 required
                 rows={6}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                placeholder="Detalles del caso."
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none focus:border-slate-400"
+                placeholder="Describe qué pasó, desde cuándo, y qué necesitas que se revise."
               />
               <p className="mt-1 text-xs text-slate-600">
-                Ejemplo: “Me llegó una factura muy alta este mes y no entiendo el consumo.”
+                No hay mínimo de caracteres.
               </p>
             </div>
 
-            {/* ✅ Input de evidencias: UI segura en móvil */}
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-slate-900">Subir evidencias (opcional)</label>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold">Subir evidencias (opcional)</label>
+              <p className="mt-1 text-xs text-slate-600">
+                Puedes adjuntar fotos, PDF o video. Si no tienes evidencias ahora, igual puedes enviar el caso.
+              </p>
 
-              <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  name="evidence"
-                  multiple
-                  className="hidden"
-                  onChange={onFilesChange}
-                  accept="image/*,application/pdf,video/*"
-                />
+              <input
+                type="file"
+                multiple
+                accept="image/*,application/pdf,video/*"
+                className="mt-2 block w-full text-sm"
+                onChange={(ev) => setFiles(ev.target.files ? Array.from(ev.target.files) : [])}
+              />
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
-                  >
-                    Elegir archivos
-                  </button>
-
-                  <div className="min-w-0 flex-1">
-                    {fileNames.length === 0 ? (
-                      <p className="text-sm text-slate-600">No has seleccionado archivos.</p>
-                    ) : (
-                      <div className="text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">
-                          {fileNames.length} archivo(s) seleccionado(s)
-                        </p>
-                        <ul className="mt-1 max-h-28 overflow-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                          {fileNames.map((n) => (
-                            <li key={n} className="break-words">
-                              • {n}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+              {files.length > 0 ? (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <div className="font-semibold">Archivos seleccionados:</div>
+                  <ul className="mt-1 list-disc pl-5">
+                    {files.map((f) => (
+                      <li key={f.name}>{f.name}</li>
+                    ))}
+                  </ul>
                 </div>
-
-                <p className="mt-2 text-xs text-slate-600">
-                  Puedes subir fotos, PDF o video. Si son varios, selecciónalos todos.
-                </p>
-              </div>
+              ) : null}
             </div>
+          </div>
+
+          {/* ✅ abajo, justo encima del botón */}
+          <div className="space-y-3">
+            {successBanner}
+            {errorBanner}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-slate-900 px-4 py-4 text-base font-semibold text-white hover:bg-slate-800 disabled:opacity-60 sm:w-auto sm:px-6"
+            disabled={sending}
+            className="w-full rounded-2xl bg-emerald-600 px-4 py-4 text-base font-bold text-white hover:bg-emerald-700 disabled:opacity-60"
           >
-            {loading ? "Enviando..." : "Enviar mi caso"}
+            {sending ? "Enviando..." : "Enviar mi caso"}
           </button>
-
-          <p className="text-xs text-slate-600">
-            Protección de datos (Ley 1581 de 2012). Usamos tu información solo para gestionar tu caso.
-          </p>
         </form>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

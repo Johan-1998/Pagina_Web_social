@@ -15,7 +15,7 @@ export const caseSchema = z.object({
   locality: z.string().trim().min(1, "Por favor escribe la localidad."),
   problemType: z.string().trim().min(1, "Por favor selecciona el tipo de problema."),
   reference: z.string().trim().optional().or(z.literal("")),
-  description: z.string().trim().min(1, "Por favor cuéntanos qué pasó (una frase es suficiente).")
+  description: z.string().trim().min(1, "Cuéntanos el problema con tus palabras.")
 });
 
 export const contactSchema = z.object({

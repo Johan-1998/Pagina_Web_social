@@ -1,63 +1,76 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  src: string;
-  alt: string;
+type PhotoModalProps = {
+  // Nuevo API (el que te di)
+  title?: string;
+  thumb: React.ReactNode;
+  imageSrc: string;
+  imageAlt: string;
+
+  // Compatibilidad por si antes lo usabas con otros nombres (no rompe)
+  src?: string;
+  alt?: string;
+  children?: React.ReactNode;
 };
 
-export default function PhotoModal({ open, onClose, src, alt }: Props) {
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+export default function PhotoModal(props: PhotoModalProps) {
+  const [open, setOpen] = useState(false);
 
-  if (!open) return null;
+  // Compat: si alguien usa src/alt viejos
+  const imageSrc = props.imageSrc || props.src || "";
+  const imageAlt = props.imageAlt || props.alt || "Foto";
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Vista ampliada de la foto"
-      onClick={onClose}
-    >
-      {/* Fondo */}
-      <div className="absolute inset-0 bg-black/60" />
-
-      {/* Contenido */}
-      <div
-        className="relative z-[101] w-full max-w-md rounded-2xl bg-white p-3 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="cursor-zoom-in"
+        aria-label="Ampliar foto"
       >
-        <div className="flex items-center justify-between gap-3 px-1 pb-2">
-          <p className="text-sm font-semibold text-slate-900">Foto</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 hover:bg-slate-50"
-            aria-label="Cerrar"
-          >
-            Cerrar
-          </button>
-        </div>
+        {props.thumb || props.children}
+      </button>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-          {/* Imagen ampliada (se ajusta a pantalla sin desbordar) */}
-          <img
-            src={src}
-            alt={alt}
-            className="h-auto w-full max-h-[70vh] object-contain"
-            loading="lazy"
-          />
+      {open ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={props.title || "Foto"}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div className="text-sm font-semibold text-slate-900">
+                {props.title || "Foto"}
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="p-4">
+              {/* Usamos <img> para evitar problemas de Next/Image si la ruta no existe */}
+              <img
+                src={imageSrc}
+                alt={imageAlt}
+                className="mx-auto max-h-[70vh] w-auto rounded-xl object-contain"
+              />
+              <p className="mt-2 text-center text-xs text-slate-500">
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      ) : null}
+    </>
   );
 }

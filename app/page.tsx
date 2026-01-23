@@ -44,47 +44,13 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* ✅ Propósito / Misión / Visión (nuevo) */}
-        <section className="mt-8 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-base font-semibold text-slate-900">Propósito</h2>
-            <p className="mt-2 text-sm text-slate-700">
-              Que cualquier persona pueda defender sus derechos frente a servicios públicos, con información clara,
-              evidencias organizadas y acompañamiento comunitario, sin lenguaje técnico ni confusiones.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-base font-semibold text-slate-900">Misión</h2>
-            <p className="mt-2 text-sm text-slate-700">
-              Brindar defensa real del usuario, facilitar el acceso a derechos y acompañar de forma justa y
-              respetuosa cada caso, explicando el proceso y ayudando a radicar y hacer seguimiento cuando aplique.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-base font-semibold text-slate-900">Visión</h2>
-            <p className="mt-2 text-sm text-slate-700">
-              Comunidades informadas, organizadas y protegidas frente a abusos: ciudadanos que saben qué hacer,
-              cómo reclamar y cómo hacer seguimiento sin miedo.
-            </p>
-          </div>
-        </section>
+       
 
         {/* ✅ Disponibilidad + Horarios al final (como pediste) */}
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white/70 p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Disponibilidad y horarios</h2>
-          <p className="mt-2 text-sm text-slate-700">
-            Te puedo atender por WhatsApp o por llamada, según te quede más fácil.
-          </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Horarios</p>
-              <p className="mt-2 text-sm text-slate-700">Lunes a viernes: 8:00 a.m. – 5:00 p.m.</p>
-              <p className="text-sm text-slate-700">Sábados: 9:00 a.m. – 12:00 p.m.</p>
-            </div>
-
+            
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Voluntarios</p>
               <p className="mt-2 text-sm text-slate-700">
