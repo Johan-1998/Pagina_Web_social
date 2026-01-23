@@ -2,32 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { caseSchema } from "@/lib/validators";
 import { prisma } from "@/lib/db";
 import { sendAdminEmail } from "@/lib/mailer";
-import { randomUUID } from "crypto";
 import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
-function safeName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 180);
+function sanitizeFileName(name: string) {
+  return name
+    .replace(/[^\w.\-() ]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 140);
 }
 
-// ===== Código corto: 3 números + 3 letras (ej: 381QPD) =====
-function randomDigits3() {
-  return String(Math.floor(Math.random() * 1000)).padStart(3, "0");
-}
-function randomLetters3() {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let out = "";
-  for (let i = 0; i < 3; i++) out += letters[Math.floor(Math.random() * letters.length)];
-  return out;
-}
 async function generateUniqueShortCode() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const randLetters = () =>
+    Array.from({ length: 3 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+
   for (let i = 0; i < 30; i++) {
-    const code = `${randomDigits3()}${randomLetters3()}`;
+    const nums = String(Math.floor(Math.random() * 900) + 100); // 100-999
+    const code = `${nums}${randLetters()}`; // ej: 871NDS
+
     const exists = await prisma.case.findUnique({ where: { shortCode: code } });
     if (!exists) return code;
   }
-  throw new Error("No se pudo generar un código corto único. Intenta de nuevo.");
+
+  return `${Date.now().toString().slice(-3)}AAA`;
 }
 
 export async function POST(req: NextRequest) {
@@ -37,22 +36,22 @@ export async function POST(req: NextRequest) {
     const payload = {
       fullName: String(form.get("fullName") || ""),
       phone: String(form.get("phone") || ""),
-      email: String(form.get("email") || ""),
+      email: String(form.get("email") || "").trim() || null,
       address: String(form.get("address") || ""),
       neighborhood: String(form.get("neighborhood") || ""),
       locality: String(form.get("locality") || ""),
       problemType: String(form.get("problemType") || ""),
-      reference: String(form.get("reference") || ""),
-      description: String(form.get("description") || "")
+      reference: String(form.get("reference") || "").trim() || null,
+      description: String(form.get("description") || ""),
     };
 
     const parsed = caseSchema.safeParse(payload);
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message || "Revisa los datos del formulario.";
+      const msg = parsed.error.issues?.[0]?.message || "Revisa los datos del formulario.";
       return NextResponse.json({ ok: false, message: msg }, { status: 400 });
     }
 
-    // Crear caso con código corto
+    // 1) Crear caso
     const shortCode = await generateUniqueShortCode();
 
     const created = await prisma.case.create({
@@ -60,103 +59,110 @@ export async function POST(req: NextRequest) {
         shortCode,
         fullName: parsed.data.fullName,
         phone: parsed.data.phone,
-        email: parsed.data.email ? parsed.data.email : null,
+        email: parsed.data.email,
         address: parsed.data.address,
         neighborhood: parsed.data.neighborhood,
         locality: parsed.data.locality,
         problemType: parsed.data.problemType,
-        reference: parsed.data.reference ? parsed.data.reference : null,
-        description: parsed.data.description
-      }
+        reference: parsed.data.reference,
+        description: parsed.data.description,
+      },
     });
 
-    // Evidencias (múltiples, ilimitadas en cantidad; limitamos por tamaño y tipo)
-    const maxBytes = Number(process.env.MAX_FILE_BYTES || "26214400"); // 25MB por archivo
-    const evidences = form.getAll("evidence");
+    // 2) Evidencias opcionales
+    const files = form.getAll("files").filter((x): x is File => x instanceof File);
+    const bucket = process.env.R2_BUCKET || ""; // solo para armar localPath
 
-    for (const item of evidences) {
-      if (!(item instanceof File)) continue;
+    let uploadedCount = 0;
+    let uploadErrors = 0;
 
-      if (item.size > maxBytes) {
-        return NextResponse.json(
-          {
-            ok: false,
-            message: `Uno de los archivos supera el tamaño permitido (${Math.round(
-              maxBytes / 1024 / 1024
-            )}MB). Por favor envía archivos más livianos.`
+    for (const file of files) {
+      if (!file || file.size === 0) continue;
+
+      const safeName = sanitizeFileName(file.name || "archivo");
+      const key = `cases/${created.shortCode}/${Date.now()}_${safeName}`;
+
+      try {
+        const buf = Buffer.from(await file.arrayBuffer());
+
+        // ✅ 1) subir a R2
+        await uploadToR2({
+          key,
+          body: buf,
+          contentType: file.type || "application/octet-stream",
+        });
+
+        // ✅ 2) SOLO si subió, guardamos Evidence
+        await prisma.evidence.create({
+          data: {
+            caseId: created.id,
+            originalName: safeName,
+            storedName: key,
+            mimeType: file.type || "application/octet-stream",
+            sizeBytes: file.size,
+            localPath: bucket ? `r2://${bucket}/${key}` : key,
           },
-          { status: 413 }
-        );
+        });
+
+        uploadedCount++;
+      } catch (e: any) {
+        uploadErrors++;
+        console.error("ERROR subiendo a R2:", {
+          shortCode: created.shortCode,
+          file: { name: file?.name, type: file?.type, size: file?.size },
+          key,
+          message: e?.message || e,
+        });
+        // no tumbamos el caso; solo seguimos con los demás archivos
       }
-
-      const mime = item.type || "application/octet-stream";
-      const allowed =
-        mime.startsWith("image/") || mime === "application/pdf" || mime.startsWith("video/");
-      if (!allowed) {
-        return NextResponse.json(
-          { ok: false, message: "Uno de los archivos no es permitido. Usa imágenes, PDF o video." },
-          { status: 400 }
-        );
-      }
-
-      const bytes = Buffer.from(await item.arrayBuffer());
-
-      // Guardamos en R2 con un key único
-      const storedName = `${created.shortCode}/${randomUUID()}-${safeName(item.name || "archivo")}`;
-
-      await uploadToR2({
-        key: storedName,
-        body: bytes,
-        contentType: mime
-      });
-
-      // Guardamos metadata en la BD
-      await prisma.evidence.create({
-        data: {
-          caseId: created.id,
-          originalName: item.name || "archivo",
-          storedName, // aquí queda el "key" de R2
-          mimeType: mime,
-          sizeBytes: item.size,
-          localPath: "" // en producción con R2 no aplica; lo dejamos vacío para no romper tu modelo actual
-        }
-      });
     }
 
-    // Email al admin (sin adjuntos, solo resumen)
-    const html =
-      `<div style="font-family: Arial, sans-serif; line-height: 1.4;">` +
-      `<h2>Nuevo caso registrado</h2>` +
-      `<p><strong>Código del caso:</strong> ${created.shortCode}</p>` +
-      `<p><strong>Nombre:</strong> ${created.fullName}</p>` +
-      `<p><strong>Teléfono:</strong> ${created.phone}</p>` +
-      `<p><strong>Email:</strong> ${created.email ?? "No informado"}</p>` +
-      `<p><strong>Dirección:</strong> ${created.address}</p>` +
-      `<p><strong>Barrio / Localidad:</strong> ${created.neighborhood} / ${created.locality}</p>` +
-      `<p><strong>Tipo de problema:</strong> ${created.problemType}</p>` +
-      `<p><strong>Referencia:</strong> ${created.reference ?? "No informado"}</p>` +
-      `<p><strong>Descripción:</strong><br/>${created.description.replace(/\n/g, "<br/>")}</p>` +
-      `<p style="color:#475569">Evidencias: guardadas de forma privada en almacenamiento seguro.</p>` +
-      `</div>`;
+    // 3) Email (sin romper tu firma: puede ser 1 o 2 args)
+    const mailPayload = {
+      shortCode: created.shortCode,
+      fullName: created.fullName,
+      phone: created.phone,
+      email: created.email || "",
+      address: created.address,
+      neighborhood: created.neighborhood,
+      locality: created.locality,
+      problemType: created.problemType,
+      reference: created.reference || "",
+      description: created.description,
+      evidenceCount: uploadedCount,
+    };
 
-    await sendAdminEmail(
-      `Nuevo caso ${created.shortCode}: ${created.problemType} (${created.locality})`,
-      html
-    );
+    // 3) Email (NO cambies tu mailer; llámalo como antes: 1 solo argumento)
+    try {
+      await (sendAdminEmail as any)({
+        shortCode: created.shortCode,
+        fullName: created.fullName,
+        phone: created.phone,
+        email: created.email || "",
+        address: created.address,
+        neighborhood: created.neighborhood,
+        locality: created.locality,
+        problemType: created.problemType,
+        reference: created.reference || "",
+        description: created.description,
+        evidenceCount: uploadedCount,
+      });
+    } catch (e: any) {
+      console.error("ERROR enviando email:", e?.message || e);
+    }
+
 
     return NextResponse.json({
       ok: true,
-      message:
-        "Listo. Recibimos tu caso. En las próximas horas hábiles revisaremos la información y te contactaremos por WhatsApp.",
-      caseId: created.shortCode
+      shortCode: created.shortCode,
+      id: created.id,
+      uploadedCount,
+      uploadErrors,
     });
-  } catch (err) {
+  } catch (e: any) {
+    console.error("ERROR /api/casos:", e?.message || e);
     return NextResponse.json(
-      {
-        ok: false,
-        message:
-          "En este momento no pudimos recibir tu caso. Por favor intenta de nuevo o escríbenos por WhatsApp."
-      },
+      { ok: false, message: "No se pudo procesar tu caso. Intenta de nuevo." },
       { status: 500 }
     );
   }

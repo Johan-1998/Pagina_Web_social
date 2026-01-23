@@ -61,7 +61,7 @@ export default function ContactoPage() {
       if (!res.ok || !data?.ok) {
         setMsg({
           type: "err",
-          text: data?.message || "No pudimos enviar tu mensaje. Intenta de nuevo."
+          text: data?.message || "No pudimos enviar  tu mensaje. Intenta de nuevo."
         });
         return;
       }
