@@ -52,7 +52,7 @@ export default function SobreMiPage() {
                   />
                 </div>
               }
-              imageSrc="/johan.jpeg"
+              imageSrc="/Johan.jpeg"
               imageAlt="Foto de Johan Mauricio Sánchez Gaviria"
             />
           </div>
